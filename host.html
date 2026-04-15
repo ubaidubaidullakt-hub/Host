@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Remote Control</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 50px; width: 300px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; }
+        .btn-host { background-color: #28a745; margin-bottom: 10px; }
+        .btn-control { background-color: #007bff; }
+        #video-container { display: none; margin-top: 20px; width: 90%; max-width: 800px; }
+        video { width: 100%; border: 2px solid #333; }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="setup-area">
+        <h2>Remote Link</h2>
+        <input type="text" id="idInput" placeholder="4-Digit ID (e.g. 1234)" maxlength="4">
+        <input type="password" id="passInput" placeholder="Password">
+        
+        <button class="btn-host" onclick="startHosting()">Add Device (Host)</button>
+        <button class="btn-control" onclick="startControlling()">Control Remote Device</button>
+    </div>
+
+    <div id="video-container">
+        <h3 id="status">Connected</h3>
+        <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+
+    <script>
+        const videoElem = document.getElementById('remoteVideo');
+        
+        // 1. Logic for the Phone (The one being controlled)
+        async function startHosting() {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                videoElem.srcObject = stream;
+                document.getElementById('setup-area').style.display = 'none';
+                document.getElementById('video-container').style.display = 'block';
+                console.log("Hosting started. Waiting for controller...");
+                // In a real app, you'd send this stream to a WebRTC Peer
+            } catch (err) {
+                alert("Error sharing screen: " + err);
+            }
+        }
+
+        // 2. Logic for the PC (The one controlling)
+        function startControlling() {
+            const id = document.getElementById('idInput').value;
+            const pass = document.getElementById('passInput').value;
+            
+            if(id.length < 4) return alert("Enter 4 digit ID");
+            
+            document.getElementById('setup-area').style.display = 'none';
+            document.getElementById('video-container').style.display = 'block';
+            document.getElementById('status').innerText = "Controlling Device: " + id;
+            
+            // Capture clicks on the video and send to "server"
+            videoElem.addEventListener('click', (e) => {
+                const rect = videoElem.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+                console.log(`Sending Click to Server: X=${x}, Y=${y}`);
+            });
+        }
+    </script>
+</body>
+</html>
